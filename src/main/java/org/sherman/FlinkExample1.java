@@ -11,6 +11,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
+import static java.util.Optional.ofNullable;
+
 /**
  * @author Denis Gabaydulin
  * @since 08/07/2016
@@ -25,20 +27,10 @@ public class FlinkExample1 {
         DataStream<String> events = env.readTextFile("file:///home/sherman/prod-stat/statistics.2016-05-25.log");
 
         events.map(
-                new MapFunction<String, Map<String, Object>>() {
-                    @Override
-                    public Map<String, Object> map(String value) throws Exception {
-                        return mapper.readValue(value, new TypeReference<Map<String, Object>>() {
-                        });
-                    }
-                }
+                (MapFunction<String, Map<String, Object>>) value -> mapper.readValue(value, new TypeReference<Map<String, Object>>() {
+                })
         ).map(
-                new MapFunction<Map<String, Object>, Long>() {
-                    @Override
-                    public Long map(Map<String, Object> value) throws Exception {
-                        return Optional.ofNullable(value.get("userId")).map(val -> (long) val).orElse(null);
-                    }
-                }
+                (MapFunction<Map<String, Object>, Long>) value -> ofNullable(value.get("userId")).map(val -> (long) val).orElse(null)
         )
                 .filter(Objects::nonNull)
                 .print();
